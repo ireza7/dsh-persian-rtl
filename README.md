@@ -1,6 +1,6 @@
 # dsh-persian-rtl
 
-Persian (Farsi) RTL fix for [DeepSeek Harness](https://github.com/deepseek-ai).
+Persian (Farsi) RTL fix for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — until RTL is handled officially.
 
 ## What it does
 
@@ -9,22 +9,33 @@ Fully automatic per-paragraph text direction (`unicode-bidi: plaintext`): every 
 Covered surfaces:
 
 - **Assistant answers** — including while streaming
-- **Thinking / reasoning cells** (`turn-process`)
-- **Question boxes** (`ask_user_question` tool rows, plan-review and question composer cards)
+- **User + steering message bubbles** — including composer submit echoes
+- **Thinking / reasoning cells** (`turn-process` members and inline reasoning, reasoning flow nodes)
+- **Tool-call / tool-result cells** — any `data-tool` row (including `ask_user_question` rendered inside the chat flow)
+- **Question boxes + plan-review cards** (composer-takeover cards)
 
 **Latin runs stay intact** — `code`, `pre`, `kbd`, and links are isolated LTR, so English words and numbers keep their order inside Persian text instead of jumping around.
 
-User messages, the composer, sidebar, and settings are left alone, and no shipped renderer is replaced — the plugin only adds CSS.
+**Logical geometry fixed** — lists, blockquotes, and task checkboxes use `inline-start` padding/borders, so RTL paragraphs get correctly-sided bullets, quote bars, and gaps.
+
+The composer, sidebar, and settings are left alone, and no shipped renderer is replaced — the plugin only adds CSS.
 
 ## Install
 
-In any DeepSeek Harness session with the plugin-manager tool:
+In any DeepSeek Harness session with the plugin-manager tool (Creator mode), run:
 
 ```
-install_bundle with target = /path/to/dsh-persian-rtl
+install_bundle with target = https://github.com/ireza7/dsh-persian-rtl
 ```
 
-Or publish the folder to npm and install by package name.
+That works for everyone — no local clone needed. The bundle takes effect immediately in live profiles (no restart).
+
+Alternatives:
+
+- From a local clone: `install_bundle with target = /path/to/dsh-persian-rtl`
+- From npm (if published): `install_bundle with target = dsh-persian-rtl`
+
+To remove it later: `remove_bundle` with the bundle name.
 
 ## How it works
 
