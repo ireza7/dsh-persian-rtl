@@ -1,14 +1,20 @@
 # dsh-persian-rtl
 
-Persian (Farsi) RTL fix for [DeepSeek Harness](https://github.com/deepseek-ai) assistant answers.
+Persian (Farsi) RTL fix for [DeepSeek Harness](https://github.com/deepseek-ai).
 
 ## What it does
 
-- **Automatic per-paragraph direction** — every paragraph of an assistant answer follows its own first strong character (`unicode-bidi: plaintext`): Persian paragraphs render right-to-left, English ones stay left-to-right. Mixed-language answers just work.
-- **Latin runs stay intact** — `code`, `pre`, `kbd`, and links are isolated LTR, so English words and numbers keep their order inside Persian text instead of jumping around.
-- **Manual toggle per answer** — a small `⇄` button next to the copy/branch actions cycles each answer through `خودکار (auto) → راست‌چین (RTL) → چپ‌چین (LTR)`. The choice persists in `localStorage`.
+Fully automatic per-paragraph text direction (`unicode-bidi: plaintext`): every paragraph follows its own first strong character — Persian paragraphs render right-to-left, English ones stay left-to-right. No buttons, no settings.
 
-Only assistant answers are touched. User messages, the composer, sidebar, and settings are left alone, and no shipped renderer is replaced — the plugin only adds CSS plus one action button.
+Covered surfaces:
+
+- **Assistant answers** — including while streaming
+- **Thinking / reasoning cells** (`turn-process`)
+- **Question boxes** (`ask_user_question` tool rows, plan-review and question composer cards)
+
+**Latin runs stay intact** — `code`, `pre`, `kbd`, and links are isolated LTR, so English words and numbers keep their order inside Persian text instead of jumping around.
+
+User messages, the composer, sidebar, and settings are left alone, and no shipped renderer is replaced — the plugin only adds CSS.
 
 ## Install
 
@@ -22,9 +28,8 @@ Or publish the folder to npm and install by package name.
 
 ## How it works
 
-- A `<style>` element is mounted via `shell.overlay`-free `ctx.effect` (global, no visual output of its own).
-- The `conversation.chat.assistant-actions` slot gains a `persian-rtl-toggle` entry receiving the durable `messageId`; clicking it sets a `data-persian-rtl="auto|rtl|ltr"` attribute on the message container, which the CSS reads.
-- Slot choice follows the supported path: `assistant-actions` has `replaceRisk: none`, unlike `conversation.chat.node` renderers which would shadow shipped UI.
+- A `<style>` element is mounted via `ctx.effect` (global, no visual output of its own).
+- Pure CSS with attribute selectors over shipped DOM markers (`data-chat-flow-kind="assistant-step"`, `data-turn-process-messages`, `data-tool="ask_user_question"`); no slot registrations, no renderer replacement.
 
 ## License
 
