@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/REPLACE_ME/dsh-persian-rtl"
+    "url": "https://github.com/ireza7/dsh-persian-rtl"
   },
   "exports": {
     ".": "./index.js",
