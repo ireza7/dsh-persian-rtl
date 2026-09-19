@@ -1,0 +1,28 @@
+{
+  "name": "dsh-persian-rtl",
+  "version": "1.0.0",
+  "description": "Persian (Farsi) RTL fix for DeepSeek Harness assistant answers: automatic per-paragraph direction plus a manual toggle.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/REPLACE_ME/dsh-persian-rtl"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-chat"
+      ]
+    }
+  }
+}
