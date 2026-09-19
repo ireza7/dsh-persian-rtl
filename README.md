@@ -22,16 +22,31 @@ The composer, sidebar, and settings are left alone, and no shipped renderer is r
 
 ## Install
 
-In any DeepSeek Harness session with the plugin-manager tool (Creator mode), run:
+Pick whichever is easiest — no local clone needed in any of them.
+
+**Web UI:** open **Plugins** in the sidebar → install → enter the spec:
 
 ```
-install_bundle with target = https://github.com/ireza7/dsh-persian-rtl
+github:ireza7/dsh-persian-rtl
 ```
 
-That works for everyone — no local clone needed. The bundle takes effect immediately in live profiles (no restart).
+**Agent tool** (Creator mode session):
+
+```
+install_bundle with target = github:ireza7/dsh-persian-rtl
+```
+
+**CLI:**
+
+```bash
+dsh plugin --profile web add github:ireza7/dsh-persian-rtl
+```
+
+The bundle takes effect immediately in live profiles (no restart).
 
 Alternatives:
 
+- Full repo URL: `https://github.com/ireza7/dsh-persian-rtl`
 - From a local clone: `install_bundle with target = /path/to/dsh-persian-rtl`
 - From npm (if published): `install_bundle with target = dsh-persian-rtl`
 
