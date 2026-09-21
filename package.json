@@ -1,7 +1,7 @@
 {
   "name": "dsh-persian-rtl",
-  "version": "1.0.0",
-  "description": "Persian (Farsi) RTL fix for DeepSeek Harness: automatic per-paragraph direction for assistant answers, thinking cells, tool cells and question boxes.",
+  "version": "1.1.0",
+  "description": "Persian (Farsi) RTL fix for DeepSeek Harness: automatic per-paragraph direction and mixed-language detection (Persian text starting with English words), thinking cells, tool cells, user bubbles and question boxes.",
   "keywords": ["deepseek-harness", "dsh-plugin", "rtl", "persian", "farsi", "arabic", "hebrew"],
   "type": "module",
   "license": "MIT",

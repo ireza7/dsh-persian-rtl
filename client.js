@@ -128,7 +128,96 @@ window.__ModuleLoader__.load({
   margin: 0 !important;
   margin-inline-end: 8px !important;
 }
+/* E. Detected RTL: elements marked with data-dsh-rtl / dir="rtl".
+   Overrides unicode-bidi: plaintext so that paragraphs starting with Latin
+   words (e.g. "React یک کتابخانه است") are strictly resolved as RTL base
+   direction instead of being treated as LTR by first-strong-character rules. */
+[data-dsh-rtl],
+:is(p, li, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, td, th, figcaption, label, summary, div)[data-dsh-rtl],
+:is(p, li, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, td, th, figcaption, label, summary, div)[dir="rtl"] {
+  direction: rtl !important;
+  unicode-bidi: isolate !important;
+  text-align: start !important;
+}
 `;
+
+    const RTL_REGEX = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
+    const LTR_REGEX = /[a-zA-Z\u00C0-\u024F]/g;
+
+    function checkRtl(text) {
+      if (!text) return false;
+      const rtl = text.match(RTL_REGEX);
+      if (!rtl) return false;
+      const rtlCount = rtl.length;
+      const ltr = text.match(LTR_REGEX);
+      const ltrCount = ltr ? ltr.length : 0;
+      return rtlCount / (rtlCount + ltrCount) >= 0.20;
+    }
+
+    const PROSE_SELECTOR = 'p, li, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, td, th, figcaption, label, summary, [data-question-key] span, [data-plan-review-key] span';
+    const USER_BUBBLE_CONTAINERS = '[data-chat-flow-kind="user"], [data-chat-flow-kind="steering"], [data-submission-echo], [data-pending-steering]';
+
+    function updateElementDirection(el) {
+      if (!el || el.nodeType !== 1) return;
+      if (el.tagName === 'PRE' || el.tagName === 'CODE' || el.tagName === 'KBD' || el.tagName === 'SAMP') return;
+      if (el.closest('pre, code, kbd, samp')) return;
+
+      const isRtl = checkRtl(el.textContent);
+      const hadRtl = el.hasAttribute('data-dsh-rtl');
+
+      if (isRtl && !hadRtl) {
+        el.setAttribute('data-dsh-rtl', '');
+        el.setAttribute('dir', 'rtl');
+      } else if (!isRtl && hadRtl) {
+        el.removeAttribute('data-dsh-rtl');
+        el.removeAttribute('dir');
+      }
+    }
+
+    function findTargets(node, set) {
+      if (!node || node.nodeType !== 1) return;
+      if (node.tagName === 'PRE' || node.tagName === 'CODE' || node.tagName === 'KBD' || node.tagName === 'SAMP') return;
+      if (node.closest('pre, code, kbd, samp')) return;
+
+      if (node.matches(PROSE_SELECTOR)) {
+        set.add(node);
+      } else {
+        const ancestor = node.closest(PROSE_SELECTOR);
+        if (ancestor && !ancestor.closest('pre, code, kbd, samp')) {
+          set.add(ancestor);
+        }
+      }
+
+      const children = node.querySelectorAll(PROSE_SELECTOR);
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (!child.closest('pre, code, kbd, samp')) {
+          set.add(child);
+        }
+      }
+
+      const bubble = node.closest(USER_BUBBLE_CONTAINERS);
+      if (bubble) {
+        const divs = bubble.querySelectorAll('div');
+        for (let i = 0; i < divs.length; i++) {
+          const d = divs[i];
+          if (!d.querySelector('div, p, ul, ol') && d.textContent.trim()) {
+            set.add(d);
+          }
+        }
+      } else {
+        const nestedBubbles = node.querySelectorAll(USER_BUBBLE_CONTAINERS);
+        for (let i = 0; i < nestedBubbles.length; i++) {
+          const divs = nestedBubbles[i].querySelectorAll('div');
+          for (let j = 0; j < divs.length; j++) {
+            const d = divs[j];
+            if (!d.querySelector('div, p, ul, ol') && d.textContent.trim()) {
+              set.add(d);
+            }
+          }
+        }
+      }
+    }
 
     return {
       inject: ['slots'],
@@ -138,10 +227,81 @@ window.__ModuleLoader__.load({
           style.setAttribute('data-persian-rtl', '');
           style.textContent = CSS;
           document.head.appendChild(style);
+
+          const queue = new Set();
+          let scheduled = false;
+          let scheduleId = null;
+
+          function processQueue() {
+            for (const el of queue) {
+              if (el.isConnected) {
+                updateElementDirection(el);
+              }
+            }
+            queue.clear();
+          }
+
+          function scheduleProcess() {
+            if (scheduled) return;
+            scheduled = true;
+            const scheduler = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout;
+            scheduleId = scheduler(() => {
+              scheduled = false;
+              scheduleId = null;
+              processQueue();
+            }, 16);
+          }
+
+          const observer = new MutationObserver((mutations) => {
+            for (let i = 0; i < mutations.length; i++) {
+              const record = mutations[i];
+              if (record.type === 'characterData') {
+                const parent = record.target.parentElement;
+                if (parent) findTargets(parent, queue);
+              } else if (record.type === 'childList') {
+                for (let j = 0; j < record.addedNodes.length; j++) {
+                  const n = record.addedNodes[j];
+                  if (n.nodeType === 1) {
+                    findTargets(n, queue);
+                  } else if (n.nodeType === 3 && n.parentElement) {
+                    findTargets(n.parentElement, queue);
+                  }
+                }
+              }
+            }
+            if (queue.size > 0) {
+              scheduleProcess();
+            }
+          });
+
+          if (document.body) {
+            observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+            });
+            findTargets(document.body, queue);
+            if (queue.size > 0) {
+              processQueue();
+            }
+          }
+
           return () => {
+            observer.disconnect();
+            if (scheduleId !== null) {
+              if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(scheduleId);
+              clearTimeout(scheduleId);
+              scheduleId = null;
+            }
+            scheduled = false;
+            queue.clear();
+            document.querySelectorAll('[data-dsh-rtl]').forEach((el) => {
+              el.removeAttribute('data-dsh-rtl');
+              el.removeAttribute('dir');
+            });
             style.remove();
           };
-        }, 'dsh-persian-rtl: global direction styles');
+        }, 'dsh-persian-rtl: direction styles and dynamic observer');
       },
     };
   },

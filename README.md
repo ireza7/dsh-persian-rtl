@@ -14,6 +14,8 @@ Covered surfaces:
 - **Tool-call / tool-result cells** — any `data-tool` row (including `ask_user_question` rendered inside the chat flow)
 - **Question boxes + plan-review cards** (composer-takeover cards)
 
+**Intelligent mixed-language detection** — When a Persian sentence begins with an English word, technical term, or inline code (e.g. `React یک کتابخانه است` or `1. Node.js را نصب کنید`), standard browser first-strong-character heuristics mistakenly classify it as LTR. The plugin dynamically analyzes character composition and enforces RTL base direction with full streaming support.
+
 **Latin runs stay intact** — `code`, `pre`, `kbd`, and links are isolated LTR, so English words and numbers keep their order inside Persian text instead of jumping around.
 
 **Logical geometry fixed** — lists, blockquotes, and task checkboxes use `inline-start` padding/borders, so RTL paragraphs get correctly-sided bullets, quote bars, and gaps.
@@ -54,8 +56,9 @@ To remove it later: `remove_bundle` with the bundle name.
 
 ## How it works
 
-- A `<style>` element is mounted via `ctx.effect` (global, no visual output of its own).
-- Pure CSS with attribute selectors over shipped DOM markers (`data-chat-flow-kind="assistant-step"`, `data-turn-process-messages`, `data-tool="ask_user_question"`); no slot registrations, no renderer replacement.
+- A `<style>` element is mounted via `ctx.effect` providing per-paragraph direction and logical geometry fixes.
+- A high-performance, batched `MutationObserver` (`requestAnimationFrame`) monitors chat surfaces in real time to identify and correct mixed paragraphs starting with Latin runs, ensuring seamless streaming support without UI flicker.
+- Clean lifecycle management: unmounting clears the observer, timers, and removes all applied attributes leaving zero residue.
 
 ## License
 
